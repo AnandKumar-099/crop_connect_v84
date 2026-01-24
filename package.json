@@ -1,0 +1,14 @@
+{
+    "name": "crop-connect-root",
+    "version": "1.0.0",
+    "description": "Root runner for CropConnect Frontend and Backend",
+    "scripts": {
+        "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+        "start:backend": "cd backend && npm start",
+        "start:frontend": "cd frontend && npm run dev",
+        "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}
