@@ -30,19 +30,45 @@ connectDB();
 
 // Security Middleware
 app.use(helmet({
+<<<<<<< HEAD
     crossOriginResourcePolicy: { policy: "cross-origin" }
+=======
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+>>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
 })); // Set security headers
 app.use(mongoSanitize()); // Prevent NoSQL injection
 
 // CORS Configuration
 app.use(
     cors({
+<<<<<<< HEAD
         origin: config.clientUrl,
         credentials: true,
     })
 );
 
 // Rate Limiting
+=======
+        origin: (origin, callback) => {
+            // Allow requests with no origin (like mobile apps or curl requests)
+            if (!origin) return callback(null, true);
+
+            // Allow any localhost origin
+            if (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+                return callback(null, true);
+            }
+
+            // Allow configured client URL
+            if (origin === config.clientUrl) {
+                return callback(null, true);
+            }
+
+            return callback(new Error('Not allowed by CORS'));
+        },
+        credentials: true,
+    })
+);// Rate Limiting
+>>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // Limit each IP to 100 requests per windowMs
@@ -102,8 +128,13 @@ app.listen(PORT, () => {
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
     console.error(`❌ Unhandled Rejection: ${err.message}`);
+<<<<<<< HEAD
     // Close server & exit process
     process.exit(1);
+=======
+    // Do not exit process in development to avoid crashing on token errors
+    // process.exit(1);
+>>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
 });
 
 export default app;

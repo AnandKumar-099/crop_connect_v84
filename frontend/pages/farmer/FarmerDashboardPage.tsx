@@ -10,7 +10,11 @@ const FarmerDashboardPage: React.FC = () => {
   const [crops, setCrops] = useState<Crop[]>([]);
   const [agreements, setAgreements] = useState<Agreement[]>([]);
   const [loading, setLoading] = useState(true);
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
   const [cropName, setCropName] = useState('');
   const [quantity, setQuantity] = useState('');
   const [price, setPrice] = useState('');
@@ -51,10 +55,17 @@ const FarmerDashboardPage: React.FC = () => {
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
+<<<<<<< HEAD
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = error => reject(error);
+=======
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+>>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
     });
   };
 
@@ -62,8 +73,13 @@ const FarmerDashboardPage: React.FC = () => {
     e.preventDefault();
     if (!user) return;
     if (!cropImageFile) {
+<<<<<<< HEAD
         setFormMessage({ type: 'error', text: 'Please upload a crop image.' });
         return;
+=======
+      setFormMessage({ type: 'error', text: 'Please upload a crop image.' });
+      return;
+>>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
     }
     setFormMessage({ type: '', text: '' });
 
@@ -91,13 +107,21 @@ const FarmerDashboardPage: React.FC = () => {
       console.error(error);
     }
   };
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
   const handleAgreementAction = async (agreementId: string, status: 'accepted' | 'rejected') => {
     try {
       await apiService.updateAgreementStatus(agreementId, status);
       fetchData();
     } catch (error) {
+<<<<<<< HEAD
         console.error("Failed to update agreement", error);
+=======
+      console.error("Failed to update agreement", error);
+>>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
     }
   };
 
@@ -114,6 +138,7 @@ const FarmerDashboardPage: React.FC = () => {
             <form onSubmit={handleSellCrop} className="space-y-4">
               <div>
                 <label htmlFor="cropName" className={labelClasses}>Crop Name</label>
+<<<<<<< HEAD
                 <input type="text" id="cropName" value={cropName} onChange={e => setCropName(e.target.value)} required className={inputClasses}/>
               </div>
               <div>
@@ -143,12 +168,44 @@ const FarmerDashboardPage: React.FC = () => {
                     </label>
                     <input id="crop-image-upload" name="cropImage" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" required />
                   </div>
+=======
+                <input type="text" id="cropName" value={cropName} onChange={e => setCropName(e.target.value)} required className={inputClasses} />
+              </div>
+              <div>
+                <label htmlFor="quantity" className={labelClasses}>Quantity (kg)</label>
+                <input type="number" id="quantity" value={quantity} onChange={e => setQuantity(e.target.value)} required className={inputClasses} />
+              </div>
+              <div>
+                <label htmlFor="price" className={labelClasses}>Price (₹ per kg)</label>
+                <input type="number" id="price" value={price} onChange={e => setPrice(e.target.value)} required className={inputClasses} />
+              </div>
+              <div>
+                <label htmlFor="location" className={labelClasses}>Location</label>
+                <input type="text" id="location" value={location} onChange={e => setLocation(e.target.value)} required className={inputClasses} />
+              </div>
+              <div>
+                <label className={labelClasses}>Crop Image</label>
+                <div className="mt-1 flex items-center space-x-4">
+                  <span className="h-20 w-20 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700 border dark:border-gray-600">
+                    {cropImagePreview ? (
+                      <img src={cropImagePreview} alt="Crop preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs">No Image</div>
+                    )}
+                  </span>
+                  <label htmlFor="crop-image-upload" className="cursor-pointer bg-white dark:bg-gray-700 py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Upload Image
+                  </label>
+                  <input id="crop-image-upload" name="cropImage" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" required />
+                </div>
+>>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
               </div>
               <button type="submit" className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all">List Crop</button>
               {formMessage.text && <p className={`text-sm text-center mt-2 ${formMessage.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>{formMessage.text}</p>}
             </form>
           </Card>
           <Card title="Market Overview">
+<<<<<<< HEAD
              <div className="space-y-4">
                 <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">Your Active Listings</span>
@@ -159,6 +216,18 @@ const FarmerDashboardPage: React.FC = () => {
                     <span className="font-bold text-yellow-500 dark:text-yellow-400 text-2xl">{agreements.filter(a => a.status === 'pending').length}</span>
                 </div>
              </div>
+=======
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 dark:text-gray-400">Your Active Listings</span>
+                <span className="font-bold text-green-600 dark:text-green-400 text-2xl">{crops.length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 dark:text-gray-400">Pending Requests</span>
+                <span className="font-bold text-yellow-500 dark:text-yellow-400 text-2xl">{agreements.filter(a => a.status === 'pending').length}</span>
+              </div>
+            </div>
+>>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
           </Card>
         </div>
 
@@ -179,12 +248,22 @@ const FarmerDashboardPage: React.FC = () => {
                   {crops.length > 0 ? crops.map(crop => (
                     <tr key={crop.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-6 py-4 whitespace-nowrap">
+<<<<<<< HEAD
                         <img src={crop.imageUrl} alt={crop.cropName} className="w-16 h-16 object-cover rounded-md"/>
+=======
+                        <img src={crop.imageUrl} alt={crop.cropName} className="w-16 h-16 object-cover rounded-md" />
+>>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{crop.cropName}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{crop.quantity} kg</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">₹{crop.price}/kg</td>
+<<<<<<< HEAD
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{crop.location}</td>
+=======
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {typeof crop.location === 'object' ? (crop.location as any).address : crop.location}
+                      </td>
+>>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
                     </tr>
                   )) : <tr><td colSpan={5} className="text-center py-4">No crops listed yet.</td></tr>}
                 </tbody>
