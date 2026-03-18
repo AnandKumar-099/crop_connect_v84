@@ -9,6 +9,7 @@ import {
     completeOrder,
     cancelOrder,
     updatePaymentStatus,
+    downloadAgreementPDF,
 } from '../controllers/orderController.js';
 import { verifyToken, authorize } from '../middleware/auth.js';
 import { createOrderValidation, mongoIdValidation, validate } from '../middleware/validation.js';
@@ -118,5 +119,12 @@ router.patch(
     validate,
     updatePaymentStatus
 );
+
+/**
+ * @route   GET /api/orders/:id/pdf
+ * @desc    Download agreement as PDF
+ * @access  Private (Buyer or Farmer involved)
+ */
+router.get('/:id/pdf', verifyToken, mongoIdValidation, validate, downloadAgreementPDF);
 
 export default router;

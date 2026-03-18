@@ -34,7 +34,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
               {user?.profileImageUrl ? (
                   <img src={user.profileImageUrl} alt="Profile" className="w-9 h-9 rounded-full object-cover ring-2 ring-green-500 dark:ring-green-400" />
               ) : (
-                  <UserCircleIcon className="w-9 h-9 text-gray-600 dark:text-gray-300" />
+                  <img src="/default-user.png" alt="Default User" className="w-9 h-9 rounded-full object-cover ring-1 ring-gray-300 dark:ring-gray-600" />
               )}
               <span className="hidden md:inline text-gray-700 dark:text-gray-300 font-medium">{user?.name}</span>
             </button>

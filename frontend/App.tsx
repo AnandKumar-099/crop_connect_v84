@@ -24,67 +24,38 @@ const App: React.FC = () => {
             <Route path="/register" element={<RegisterPage />} />
 
             {/* Farmer Routes */}
-<<<<<<< HEAD
             <Route
               path="/farmer/dashboard"
-=======
-            <Route 
-              path="/farmer/dashboard" 
->>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
               element={
                 <ProtectedRoute allowedRoles={['farmer']}>
                   <FarmerDashboardPage />
                 </ProtectedRoute>
-<<<<<<< HEAD
               }
             />
             <Route
               path="/farmer/agreements"
-=======
-              } 
-            />
-            <Route 
-              path="/farmer/agreements" 
->>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
               element={
                 <ProtectedRoute allowedRoles={['farmer']}>
                   <AgreementsPage />
                 </ProtectedRoute>
-<<<<<<< HEAD
               }
             />
 
             {/* Buyer Routes */}
             <Route
               path="/buyer/dashboard"
-=======
-              } 
-            />
-
-            {/* Buyer Routes */}
-            <Route 
-              path="/buyer/dashboard" 
->>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
               element={
                 <ProtectedRoute allowedRoles={['buyer']}>
                   <BuyerDashboardPage />
                 </ProtectedRoute>
-<<<<<<< HEAD
               }
             />
             <Route
               path="/buyer/recommendations"
-=======
-              } 
-            />
-            <Route 
-              path="/buyer/recommendations" 
->>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
               element={
                 <ProtectedRoute allowedRoles={['buyer']}>
                   <RecommendationsPage />
                 </ProtectedRoute>
-<<<<<<< HEAD
               }
             />
             <Route
@@ -105,41 +76,13 @@ const App: React.FC = () => {
             />
             <Route
               path="/buyer/agreements"
-=======
-              } 
-            />
-            <Route 
-              path="/buyer/price-forecast" 
-              element={
-                <ProtectedRoute allowedRoles={['buyer']}>
-                  <PriceForecastPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/buyer/risk-analysis" 
-              element={
-                <ProtectedRoute allowedRoles={['buyer']}>
-                  <RiskAnalysisPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/buyer/agreements" 
->>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
               element={
                 <ProtectedRoute allowedRoles={['buyer']}>
                   <AgreementsPage />
                 </ProtectedRoute>
-<<<<<<< HEAD
               }
             />
 
-=======
-              } 
-            />
-            
->>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </HashRouter>

@@ -1,0 +1,14 @@
+node_modules/
+.env
+.DS_Store
+dist/
+build/
+*.log
+.vscode/
+.idea/
+*.pyc
+__pycache__/
+ML/venv/
+ML/models/*.pkl
+ML/models/*.joblib
+!ML/models/.gitkeep

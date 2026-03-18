@@ -37,6 +37,8 @@ export interface Agreement {
   status: AgreementStatus;
   terms: string;
   createdAt: string;
+  riskScore?: number;
+  riskLevel?: string;
 }
 
 export interface FarmerRecommendation {
@@ -48,4 +50,14 @@ export interface FarmerRecommendation {
 export interface PriceDataPoint {
   date: string;
   price: number;
+}
+
+export interface ChatMessage {
+  _id?: string;
+  id?: string;
+  senderId: string | any;
+  receiverId: string | any;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
 }

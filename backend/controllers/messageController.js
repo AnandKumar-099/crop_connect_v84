@@ -31,11 +31,11 @@ export const sendMessage = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get conversation between two users
- * @route   GET /api/messages/conversation/:userId
+ * @route   GET /api/messages/conversation/:id
  * @access  Private
  */
 export const getConversation = asyncHandler(async (req, res) => {
-    const { userId } = req.params;
+    const userId = req.params.id;
 
     const messages = await Message.find({
         $or: [
@@ -108,11 +108,11 @@ export const getConversations = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Mark messages as read
- * @route   PATCH /api/messages/read/:userId
+ * @route   PATCH /api/messages/read/:id
  * @access  Private
  */
 export const markAsRead = asyncHandler(async (req, res) => {
-    const { userId } = req.params;
+    const userId = req.params.id;
 
     await Message.updateMany(
         {

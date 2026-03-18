@@ -1,6 +1,7 @@
 import Order from '../models/Order.js';
 import Crop from '../models/Crop.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import PDFDocument from 'pdfkit';
 
 /**
  * @desc    Create a new order
@@ -39,6 +40,33 @@ export const createOrder = asyncHandler(async (req, res) => {
     // Calculate total price
     const totalPrice = crop.price * quantity;
 
+    // Get ML Risk Prediction
+    let riskScore = 0.5;
+    let riskLevel = 'MEDIUM';
+    
+    try {
+        const mlResponse = await fetch('http://localhost:8000/predict-risk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                crop: crop.name,
+                quantity: quantity,
+                amount: totalPrice,
+                past_defaults: 0,
+                weather_risk: 0.5,
+                reliability: 4.0
+            })
+        });
+        
+        if (mlResponse.ok) {
+            const mlData = await mlResponse.json();
+            riskScore = mlData.risk_score;
+            riskLevel = mlData.risk_level;
+        }
+    } catch (error) {
+        console.error('ML Risk Prediction Error:', error.message);
+    }
+
     // Create order
     const order = await Order.create({
         buyerId: req.user._id,
@@ -46,9 +74,11 @@ export const createOrder = asyncHandler(async (req, res) => {
         cropId: crop._id,
         quantity,
         totalPrice,
-        deliveryAddress,
+        deliveryAddress: deliveryAddress || 'To Be Decided',
         paymentMethod,
         buyerNotes,
+        riskScore,
+        riskLevel
     });
 
     // Populate order details
@@ -395,4 +425,77 @@ export const updatePaymentStatus = asyncHandler(async (req, res) => {
         message: 'Payment status updated',
         data: { order },
     });
+});
+
+/**
+ * @desc    Download PDF Agreement
+ * @route   GET /api/orders/:id/pdf
+ * @access  Private (Buyer or Farmer involved)
+ */
+export const downloadAgreementPDF = asyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id)
+        .populate('farmerId', 'name phone farmDetails address')
+        .populate('buyerId', 'name phone address')
+        .populate('cropId', 'cropName');
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Agreement not found');
+    }
+
+    if (
+        order.buyerId._id.toString() !== req.user._id.toString() &&
+        order.farmerId._id.toString() !== req.user._id.toString()
+    ) {
+        res.status(403);
+        throw new Error('Not authorized to access this agreement');
+    }
+
+    const doc = new PDFDocument({ margin: 50 });
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="agreement_${order._id}.pdf"`);
+    
+    doc.pipe(res);
+    
+    doc.fontSize(20).text('Crop Contract Agreement', { align: 'center' }).moveDown(2);
+    
+    doc.fontSize(12)
+       .text(`Agreement ID: ${order._id}`)
+       .text(`Date Created: ${new Date(order.createdAt).toLocaleDateString()}`)
+       .text(`Status: ${order.status.toUpperCase()}`)
+       .moveDown(1);
+       
+    doc.fontSize(14).text('Farmer Details', { underline: true }).moveDown(0.5);
+    doc.fontSize(12)
+       .text(`Name: ${order.farmerId.name}`)
+       .text(`Phone: ${order.farmerId.phone}`)
+       .text(`Address: ${order.farmerId.farmDetails?.address || order.farmerId.address || 'N/A'}`)
+       .moveDown(1);
+       
+    doc.fontSize(14).text('Buyer Details', { underline: true }).moveDown(0.5);
+    doc.fontSize(12)
+       .text(`Name: ${order.buyerId.name}`)
+       .text(`Phone: ${order.buyerId.phone}`)
+       .text(`Address: ${order.deliveryAddress || order.buyerId.address || 'N/A'}`)
+       .moveDown(1);
+       
+    const totalPrice = order.quantity * order.price;
+    doc.fontSize(14).text('Crop Details', { underline: true }).moveDown(0.5);
+    doc.fontSize(12)
+       .text(`Crop Name: ${order.cropId ? order.cropId.cropName : 'N/A'}`)
+       .text(`Quantity: ${order.quantity} kg`)
+       .text(`Price per kg: Rs. ${order.price}`)
+       .text(`Total Value: Rs. ${totalPrice.toLocaleString()}`)
+       .moveDown(2);
+       
+    doc.fontSize(12).text('Signatures', { underline: true }).moveDown(1.5);
+    
+    const startY = doc.y;
+    doc.text('_______________________', 50, startY);
+    doc.text('Farmer Signature', 50, startY + 15);
+    doc.text('_______________________', 350, startY);
+    doc.text('Buyer Signature', 350, startY + 15);
+    
+    doc.end();
 });

@@ -34,12 +34,12 @@ router.get('/conversations', verifyToken, getConversations);
 router.get('/unread-count', verifyToken, getUnreadCount);
 
 /**
- * @route   GET /api/messages/conversation/:userId
+ * @route   GET /api/messages/conversation/:id
  * @desc    Get conversation with specific user
  * @access  Private
  */
 router.get(
-    '/conversation/:userId',
+    '/conversation/:id',
     verifyToken,
     mongoIdValidation,
     validate,
@@ -47,11 +47,11 @@ router.get(
 );
 
 /**
- * @route   PATCH /api/messages/read/:userId
+ * @route   PATCH /api/messages/read/:id
  * @desc    Mark messages as read
  * @access  Private
  */
-router.patch('/read/:userId', verifyToken, mongoIdValidation, validate, markAsRead);
+router.patch('/read/:id', verifyToken, mongoIdValidation, validate, markAsRead);
 
 /**
  * @route   DELETE /api/messages/:id

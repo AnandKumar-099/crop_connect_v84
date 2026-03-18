@@ -61,9 +61,17 @@ const BuyerDashboardPage: React.FC = () => {
                     {rec.farmer.profileImageUrl ? (
                         <img src={rec.farmer.profileImageUrl} alt={rec.farmer.name} className="w-12 h-12 object-cover rounded-full"/>
                     ) : (
-                        <UserCircleIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+                        <img src="/default-user.png" alt="Default User" className="w-12 h-12 rounded-full object-cover ring-1 ring-gray-300 dark:ring-gray-600"/>
                     )}
-                    <img src={rec.crop.imageUrl} alt={rec.crop.cropName} className="w-12 h-12 object-cover rounded-md"/>
+                    <img 
+                      src={rec.crop.imageUrl || `https://source.unsplash.com/300x300/?${encodeURIComponent(rec.crop.cropName)}`} 
+                      alt={rec.crop.cropName} 
+                      className="w-12 h-12 object-cover rounded-md"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "/default-crop.png";
+                      }}
+                    />
                     <div>
                         <p className="font-semibold text-gray-800 dark:text-gray-100">{rec.farmer.name}</p>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{rec.crop.cropName} - {rec.crop.location}</p>

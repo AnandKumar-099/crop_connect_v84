@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
+import ChatModal from '../../components/ChatModal';
 import { apiService } from '../../services/apiService';
 import { Agreement, AgreementStatus } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
@@ -10,6 +11,9 @@ const AgreementsPage: React.FC = () => {
   const [agreements, setAgreements] = useState<Agreement[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<AgreementStatus | 'all'>('all');
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatPartner, setChatPartner] = useState<{id: string, name: string} | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -28,6 +32,17 @@ const AgreementsPage: React.FC = () => {
     fetchData();
   }, [fetchData]);
   
+  const handleDownloadPDF = async (agreementId: string) => {
+    try {
+      setDownloadingId(agreementId);
+      await apiService.downloadAgreementPDF(agreementId);
+    } catch (error) {
+      console.error('Generate PDF failed:', error);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   const getStatusChip = (status: AgreementStatus) => {
     const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
     switch (status) {
@@ -71,11 +86,15 @@ const AgreementsPage: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total Value</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                {user?.role === 'farmer' && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Risk Assessment</th>
+                )}
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
-                <tr><td colSpan={6} className="text-center py-4">Loading agreements...</td></tr>
+                <tr><td colSpan={user?.role === 'farmer' ? 8 : 7} className="text-center py-4">Loading agreements...</td></tr>
               ) : filteredAgreements.length > 0 ? (
                 filteredAgreements.map((agreement) => (
                   <tr key={agreement.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
@@ -85,15 +104,81 @@ const AgreementsPage: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">₹{(agreement.crop.quantity * agreement.crop.price).toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(agreement.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap"><span className={getStatusChip(agreement.status)}>{agreement.status}</span></td>
+                    {user?.role === 'farmer' && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {agreement.riskScore !== undefined ? (
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">Score: {(agreement.riskScore * 100).toFixed(0)}%</span>
+                            <span className={`text-xs font-bold ${
+                              agreement.riskLevel === 'LOW' ? 'text-green-600 dark:text-green-400' :
+                              agreement.riskLevel === 'MEDIUM' ? 'text-yellow-600 dark:text-yellow-400' :
+                              'text-red-600 dark:text-red-400'
+                            }`}>
+                              {agreement.riskLevel}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400 dark:text-gray-500">N/A</span>
+                        )}
+                      </td>
+                    )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <button
+                          title={`Chat with ${user?.role === 'farmer' ? 'Buyer' : 'Farmer'}`}
+                          disabled={agreement.status === 'completed'}
+                          onClick={() => {
+                            const id = user?.role === 'farmer' ? agreement.buyerId : agreement.farmerId;
+                            const name = user?.role === 'farmer' ? agreement.buyerName : agreement.farmerName;
+                            setChatPartner({ id, name });
+                            setIsChatOpen(true);
+                          }}
+                          className={`transition-colors flex items-center justify-center p-2 rounded-full ${
+                            agreement.status === 'completed' 
+                              ? 'text-gray-400 bg-gray-100 dark:bg-gray-800 cursor-not-allowed' 
+                              : 'text-white bg-green-500 hover:bg-green-600 shadow-sm'
+                          }`}
+                        >
+                          <span className="text-lg leading-none m-0 p-0" aria-label="Chat">💬</span>
+                        </button>
+
+                        {(agreement.status === 'accepted' || agreement.status === 'completed') && (
+                          <button
+                            title="Download Agreement Document"
+                            onClick={() => handleDownloadPDF(agreement.id)}
+                            disabled={downloadingId === agreement.id}
+                            className={`transition-colors flex items-center justify-center p-2 rounded-full ${
+                              downloadingId === agreement.id
+                                ? 'text-gray-400 bg-gray-100 dark:bg-gray-800 cursor-wait'
+                                : 'text-white bg-blue-500 hover:bg-blue-600 shadow-sm'
+                            }`}
+                          >
+                            {downloadingId === agreement.id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                            ) : (
+                              <span className="text-lg leading-none m-0 p-0" aria-label="Download PDF">📄</span>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan={6} className="text-center py-4">No agreements found for this filter.</td></tr>
+                <tr><td colSpan={user?.role === 'farmer' ? 8 : 7} className="text-center py-4">No agreements found for this filter.</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </Card>
+      {isChatOpen && chatPartner && (
+          <ChatModal
+              isOpen={isChatOpen}
+              onClose={() => setIsChatOpen(false)}
+              partnerId={chatPartner.id}
+              partnerName={chatPartner.name}
+          />
+      )}
     </Layout>
   );
 };

@@ -76,6 +76,14 @@ const orderSchema = new mongoose.Schema(
             type: String,
             trim: true,
         },
+        // ML Risk Assessment
+        riskScore: {
+            type: Number,
+        },
+        riskLevel: {
+            type: String,
+            enum: ['Low', 'Medium', 'High', 'LOW', 'MEDIUM', 'HIGH'],
+        },
     },
     {
         timestamps: true,

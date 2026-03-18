@@ -50,10 +50,6 @@ const RegisterPage: React.FC = () => {
             setError('Please fill in all farm details.');
             return;
         }
-        if (!profileImageFile) {
-            setError('Please upload a profile image.');
-            return;
-        }
     }
     setError('');
     setLoading(true);
@@ -131,7 +127,7 @@ const RegisterPage: React.FC = () => {
                     {profileImagePreview ? (
                         <img src={profileImagePreview} alt="Profile Preview" className="w-24 h-24 rounded-full object-cover ring-2 ring-green-500"/>
                     ) : (
-                        <UserCircleIcon className="w-24 h-24 text-gray-400 dark:text-gray-500"/>
+                        <img src="/default-user.png" alt="Default User" className="w-24 h-24 rounded-full object-cover ring-2 ring-gray-300 dark:ring-gray-600"/>
                     )}
                      <label htmlFor="profile-image-upload" className="cursor-pointer bg-white dark:bg-gray-700 px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
                         Upload Photo

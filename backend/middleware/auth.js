@@ -53,10 +53,7 @@ export const verifyToken = async (req, res, next) => {
         req.user = user;
         next();
     } catch (error) {
-<<<<<<< HEAD
-=======
         console.error('Verify Token Error:', error); // Debug log
->>>>>>> 3ed0358b8ff785f9044a74179d5f8514fd912bca
         if (error.name === 'JsonWebTokenError') {
             return res.status(401).json({
                 success: false,

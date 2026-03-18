@@ -144,9 +144,8 @@ export const createOrderValidation = [
         .withMessage('Quantity must be at least 1'),
 
     body('deliveryAddress')
-        .trim()
-        .notEmpty()
-        .withMessage('Delivery address is required'),
+        .optional()
+        .trim(),
 
     body('paymentMethod')
         .optional()
