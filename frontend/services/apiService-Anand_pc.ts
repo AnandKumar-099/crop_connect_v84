@@ -1,7 +1,7 @@
 import { User, UserRole, Crop, Agreement, FarmerRecommendation, PriceDataPoint } from '../types';
 
 // Backend API base URL
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = 'https://crop-connect-v84.onrender.com/api';
 
 // Helper function to get auth token from localStorage
 const getAuthToken = (): string | null => {
@@ -20,7 +20,7 @@ const getImageUrl = (url: string) => {
   if (url.startsWith('http')) return url;
   if (url.startsWith('data:')) return url;
   // Use port 5001 for backend images
-  return `http://localhost:5001${url.startsWith('/') ? '' : '/'}${url}`;
+  return `https://crop-connect-v84.onrender.com${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
 // Helper function to clear auth tokens
