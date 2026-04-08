@@ -1,7 +1,7 @@
 import { User, UserRole, Crop, Agreement, FarmerRecommendation, PriceDataPoint } from '../types';
 
-const API_URL = 'http://localhost:5000/api';
-const ML_URL = 'http://localhost:8000';
+const API_URL = 'https://crop-connect-v84.onrender.com/api';
+const ML_URL = 'https://crop-connect-v84-5.onrender.com';
 
 // Helper to get auth headers with token from localStorage
 const getAuthHeaders = () => {
