@@ -66,8 +66,8 @@ const PriceForecastPage: React.FC = () => {
             {loading ? (
               <div className="h-80 flex items-center justify-center">Loading chart...</div>
             ) : (
-              <div style={{ width: '100%', height: 400 }}>
-                <ResponsiveContainer>
+              <div style={{ width: '100%', minHeight: 300 }}>
+                <ResponsiveContainer width="100%" height={300}>
                   <LineChart
                     data={chartData}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}

@@ -2,25 +2,27 @@ import React, { useState } from 'react';
 import Layout from '../../components/Layout';
 import Card from '../../components/Card';
 import { apiService } from '../../services/apiService';
+import { useAuth } from '../../hooks/useAuth';
 
 const RiskAnalysisPage: React.FC = () => {
-  const [quantity, setQuantity] = useState('');
-  const [weatherRisk, setWeatherRisk] = useState(false);
-  const [pastDelays, setPastDelays] = useState(false);
+  const { user } = useAuth();
+  const [farmerId, setFarmerId] = useState('');
   const [riskResult, setRiskResult] = useState<number | null>(null);
+  const [riskLevel, setRiskLevel] = useState<string>('');
+  const [riskMetrics, setRiskMetrics] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     setLoading(true);
     setRiskResult(null);
+    setRiskMetrics(null);
     try {
-      const result = await apiService.getRiskPrediction({
-        quantity: parseInt(quantity),
-        weatherRisk,
-        pastDelays,
-      });
+      const result = await apiService.getDynamicRisk(user.id, farmerId);
       setRiskResult(result.riskProbability);
+      setRiskLevel(result.riskLevel);
+      setRiskMetrics(result.metrics);
     } catch (error) {
       console.error("Failed to get risk prediction", error);
     } finally {
@@ -49,34 +51,31 @@ const RiskAnalysisPage: React.FC = () => {
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Analyze Contract Risk</h3>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Crop Quantity (kg)</label>
+                  <label htmlFor="farmerId" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Farmer ID</label>
                   <input
-                    type="number"
-                    id="quantity"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
+                    type="text"
+                    id="farmerId"
+                    value={farmerId}
+                    onChange={(e) => setFarmerId(e.target.value)}
                     required
+                    placeholder="Enter Farmer ID"
                     className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   />
+                  <p className="mt-2 text-sm text-gray-500">
+                    Enter the Farmer ID to dynamically compute contract risk based on past history.
+                  </p>
                 </div>
-                <div className="flex items-start">
-                  <div className="flex items-center h-5">
-                    <input id="weatherRisk" name="weatherRisk" type="checkbox" checked={weatherRisk} onChange={(e) => setWeatherRisk(e.target.checked)} className="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 dark:border-gray-600 rounded" />
+                {riskMetrics && (
+                  <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                     <h4 className="font-semibold text-sm mb-2">Metrics</h4>
+                     <ul className="text-xs space-y-1">
+                        <li>Total Orders: {riskMetrics.totalOrders}</li>
+                        <li>Past Defaults: {riskMetrics.pastDefaults}</li>
+                        <li>Total Delay Days: {riskMetrics.totalDelayDays}</li>
+                        <li>Reliability Score: {riskMetrics.reliability} / 5</li>
+                     </ul>
                   </div>
-                  <div className="ml-3 text-sm">
-                    <label htmlFor="weatherRisk" className="font-medium text-gray-700 dark:text-gray-300">High Weather Risk?</label>
-                    <p className="text-gray-500 dark:text-gray-400">(e.g., predicted drought, flood)</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="flex items-center h-5">
-                    <input id="pastDelays" name="pastDelays" type="checkbox" checked={pastDelays} onChange={(e) => setPastDelays(e.target.checked)} className="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 dark:border-gray-600 rounded" />
-                  </div>
-                  <div className="ml-3 text-sm">
-                    <label htmlFor="pastDelays" className="font-medium text-gray-700 dark:text-gray-300">History of Past Delays?</label>
-                    <p className="text-gray-500 dark:text-gray-400">(with this farmer or region)</p>
-                  </div>
-                </div>
+                )}
                 <button type="submit" disabled={loading} className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-green-400 transition-colors">
                   {loading ? 'Analyzing...' : 'Analyze Risk'}
                 </button>

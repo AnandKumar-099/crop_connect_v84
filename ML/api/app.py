@@ -81,9 +81,17 @@ def predict_price():
             records = history[history['Crop'] == crop]
             if records.empty:
                 # Fallback if crop not found
-                current_price = 2000
-                prediction = 2100
+                base_price = { 'Wheat': 2200, 'Rice': 4500, 'Corn': 1800, 'Soybean': 4000 }.get(crop, 2100)
+                current_price = base_price
+                prediction = base_price * (1 + (np.random.random() - 0.5) * 0.1)
+                
+                # Mock history
                 history_data = []
+                for i in range(30):
+                    history_data.append({
+                        "date": f"Day -{30-i}",
+                        "price": base_price * (1 + (np.random.random() - 0.5) * 0.05)
+                    })
             else:
                 # Take last 30 days
                 last_30_df = records.sort_values('Date').tail(30)
@@ -122,6 +130,11 @@ def predict_price():
             prediction = base_price
             current_price = base_price
             history_data = []
+            for i in range(30):
+                history_data.append({
+                    "date": f"Day -{30-i}",
+                    "price": base_price * (1 + (np.random.random() - 0.5) * 0.05)
+                })
         
     trend = "increasing" if prediction > current_price else "decreasing"
     

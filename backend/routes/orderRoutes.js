@@ -10,11 +10,23 @@ import {
     cancelOrder,
     updatePaymentStatus,
     downloadAgreementPDF,
+    getContractRisk,
 } from '../controllers/orderController.js';
 import { verifyToken, authorize } from '../middleware/auth.js';
 import { createOrderValidation, mongoIdValidation, validate } from '../middleware/validation.js';
 
 const router = express.Router();
+
+/**
+ * @route   GET /api/orders/risk-analysis/:buyerId/:farmerId
+ * @desc    Get risk profile for a buyer-farmer pair
+ * @access  Private (Buyer or Farmer)
+ */
+router.get(
+    '/risk-analysis/:buyerId/:farmerId',
+    verifyToken,
+    getContractRisk
+);
 
 /**
  * @route   POST /api/orders

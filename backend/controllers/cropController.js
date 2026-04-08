@@ -7,8 +7,12 @@ import { asyncHandler } from '../middleware/errorHandler.js';
  * @access  Private (Farmer only)
  */
 export const createCrop = asyncHandler(async (req, res) => {
+    console.log("Incoming crop data:", req.body);
+    console.log("User:", req.user);
+
     const {
         name,
+        cropName,
         type,
         description,
         quantity,
@@ -20,20 +24,31 @@ export const createCrop = asyncHandler(async (req, res) => {
         qualityGrade,
     } = req.body;
 
+    const finalName = name || cropName;
+    const finalQuantity = Number(quantity);
+    const finalPrice = Number(price);
+
     // Handle uploaded images
-    const images = req.files ? req.files.map((file) => `/uploads/crops/${file.filename}`) : [];
+    const images = req.files && req.files.length > 0 ? req.files.map((file) => `/uploads/crops/${file.filename}`) : [];
+    
+    if (req.body.image) {
+        images.push(req.body.image);
+    }
+    
+    // Support nested location or flat location.address depending on parsing
+    const loc = location || { address: req.body['location.address'] || req.body['location[address]'] || req.body.location || 'Not specified' };
 
     const crop = await Crop.create({
         farmerId: req.user._id,
-        name,
-        type,
+        name: finalName,
+        type: type || 'Grains',
         description,
-        quantity,
-        unit,
-        price,
-        priceUnit,
+        quantity: finalQuantity,
+        unit: unit || 'kg',
+        price: finalPrice,
+        priceUnit: priceUnit || 'per kg',
         images,
-        location,
+        location: loc,
         harvestDate,
         qualityGrade,
     });

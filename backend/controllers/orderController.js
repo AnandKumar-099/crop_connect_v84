@@ -40,6 +40,20 @@ export const createOrder = asyncHandler(async (req, res) => {
     // Calculate total price
     const totalPrice = crop.price * quantity;
 
+    // Get dynamic risk variables before predicting
+    const pastOrders = await Order.find({ buyerId: req.user._id, farmerId: crop.farmerId._id });
+    const totalOrders = pastOrders.length;
+    let pastDefaults = 0;
+    let successfulOrders = 0;
+    
+    pastOrders.forEach(order => {
+        if (order.status === 'rejected' || order.status === 'cancelled') pastDefaults += 1;
+        else if (order.status === 'completed') successfulOrders += 1;
+    });
+
+    const reliability = totalOrders > 0 ? ((successfulOrders / totalOrders) * 5) : 4.0;
+    const weatherRiskIndex = Math.random() * (0.8 - 0.2) + 0.2; 
+    
     // Get ML Risk Prediction
     let riskScore = 0.5;
     let riskLevel = 'MEDIUM';
@@ -52,9 +66,9 @@ export const createOrder = asyncHandler(async (req, res) => {
                 crop: crop.name,
                 quantity: quantity,
                 amount: totalPrice,
-                past_defaults: 0,
-                weather_risk: 0.5,
-                reliability: 4.0
+                past_defaults: pastDefaults,
+                weather_risk: parseFloat(weatherRiskIndex.toFixed(2)),
+                reliability: parseFloat(reliability.toFixed(1))
             })
         });
         
@@ -498,4 +512,84 @@ export const downloadAgreementPDF = asyncHandler(async (req, res) => {
     doc.text('Buyer Signature', 350, startY + 15);
     
     doc.end();
+});
+
+/**
+ * @desc    Get dynamic risk for a given buyer and farmer combination
+ * @route   GET /api/orders/risk-analysis/:buyerId/:farmerId
+ * @access  Private (Buyer or Farmer)
+ */
+export const getContractRisk = asyncHandler(async (req, res) => {
+    const { buyerId, farmerId } = req.params;
+
+    if (req.user._id.toString() !== buyerId && req.user._id.toString() !== farmerId && req.user.role !== 'admin') {
+        return res.status(403).json({
+            success: false,
+            message: 'Not authorized to view this risk analysis',
+        });
+    }
+
+    const pastOrders = await Order.find({ buyerId, farmerId });
+
+    const totalOrders = pastOrders.length;
+    let pastDefaults = 0;
+    let totalDelayDays = 0;
+    let successfulOrders = 0;
+
+    pastOrders.forEach(order => {
+        if (order.status === 'rejected' || order.status === 'cancelled') {
+            pastDefaults += 1;
+        } else if (order.status === 'completed') {
+            successfulOrders += 1;
+        }
+        if (order.delayDays) {
+            totalDelayDays += order.delayDays;
+        }
+    });
+
+    const reliability = totalOrders > 0 ? ((successfulOrders / totalOrders) * 5).toFixed(1) : 4.0;
+    const weatherRiskIndex = Math.random() * (0.8 - 0.2) + 0.2; 
+    const averageQuantity = totalOrders > 0 ? (pastOrders.reduce((sum, order) => sum + order.quantity, 0) / totalOrders) : 50;
+    const averageAmount = totalOrders > 0 ? (pastOrders.reduce((sum, order) => sum + order.totalPrice, 0) / totalOrders) : 100000;
+
+    let riskScore = 0.5;
+    let riskLevel = 'MEDIUM';
+
+    try {
+        const mlResponse = await fetch('http://localhost:8000/predict-risk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                crop: 'Wheat', 
+                quantity: averageQuantity,
+                amount: averageAmount,
+                past_defaults: pastDefaults,
+                weather_risk: parseFloat(weatherRiskIndex.toFixed(2)),
+                reliability: parseFloat(reliability)
+            })
+        });
+        
+        if (mlResponse.ok) {
+            const mlData = await mlResponse.json();
+            riskScore = mlData.risk_score;
+            riskLevel = mlData.risk_level;
+        }
+    } catch (error) {
+        console.error('ML Risk Prediction Error:', error.message);
+    }
+
+    res.json({
+        success: true,
+        data: {
+            riskProbability: riskScore,
+            riskLevel: riskLevel,
+            metrics: {
+                totalOrders,
+                pastDefaults,
+                totalDelayDays,
+                reliability: parseFloat(reliability),
+                weatherRiskIndex: parseFloat(weatherRiskIndex.toFixed(2))
+            }
+        }
+    });
 });

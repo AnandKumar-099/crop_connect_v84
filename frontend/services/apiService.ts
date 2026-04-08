@@ -5,7 +5,7 @@ const ML_URL = 'http://localhost:8000';
 
 // Helper to get auth headers with token from localStorage
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
   return token ? {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
@@ -23,18 +23,25 @@ const handleResponse = async (res: Response) => {
   }
   
   if (!res.ok) {
-    // Check for 401 Unauthorized (Expired Token)
-    if (res.status === 401 && !window.location.hash.includes('login')) {
-      // Clear token and redirect to login
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      window.location.href = '#/login';
-      throw new Error('Session expired. Please log in again.');
-    }
     throw new Error(data.message || 'API request failed');
   }
   return data;
+};
+
+// Seamless fetch wrapper handling 401 token refresh automatically
+const fetchWithAuth = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  let res = await fetch(url, options);
+
+  if ((res.status === 401 || res.status === 403) && !window.location.hash.includes('login') && !window.location.hash.includes('register')) {
+    console.log("Token expired or unauthorized. Logging out.");
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    window.location.href = '#/login';
+    throw new Error('Session expired. Please log in again.');
+  }
+  return res;
 };
 
 // Map backend _id to frontend id
@@ -110,6 +117,7 @@ export const apiService = {
     });
     const data = await handleResponse(res);
     localStorage.setItem('accessToken', data.data.accessToken);
+    localStorage.setItem('token', data.data.accessToken);
     if (data.data.refreshToken) localStorage.setItem('refreshToken', data.data.refreshToken);
     return mapUser(data.data.user);
   },
@@ -122,6 +130,7 @@ export const apiService = {
     });
     const data = await handleResponse(res);
     localStorage.setItem('accessToken', data.data.accessToken);
+    localStorage.setItem('token', data.data.accessToken);
     if (data.data.refreshToken) localStorage.setItem('refreshToken', data.data.refreshToken);
     return mapUser(data.data.user);
   },
@@ -133,8 +142,8 @@ export const apiService = {
 
     // We need to fetch crops and orders.
     const [cropsRes, ordersRes] = await Promise.all([
-      fetch(`${API_URL}/crops/my-crops`, { headers: getAuthHeaders() }),
-      fetch(`${API_URL}/orders/farmer-orders`, { headers: getAuthHeaders() })
+      fetchWithAuth(`${API_URL}/crops/my-crops`, { headers: getAuthHeaders() }),
+      fetchWithAuth(`${API_URL}/orders/farmer-orders`, { headers: getAuthHeaders() })
     ]);
 
     const cropsData = await handleResponse(cropsRes);
@@ -146,25 +155,25 @@ export const apiService = {
     };
   },
 
-  sellCrop: async (cropData: Omit<Crop, 'id' | 'farmerName' | 'imageUrl'> & { imageFile?: File }) => {
+  sellCrop: async (cropData: Omit<Crop, 'id' | 'farmerName' | 'imageUrl'> & { image?: File | null }) => {
     const formData = new FormData();
     formData.append('name', cropData.cropName);
     formData.append('quantity', cropData.quantity.toString());
     formData.append('price', cropData.price.toString());
-    formData.append('location[address]', cropData.location);
+    formData.append('location.address', cropData.location);
     formData.append('type', 'Grains');
     formData.append('unit', 'kg');
     formData.append('priceUnit', 'per kg');
     
-    if (cropData.imageFile) {
-        formData.append('images', cropData.imageFile);
+    if (cropData.image) {
+        formData.append('images', cropData.image);
     }
     
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const res = await fetch(`${API_URL}/crops`, {
+    const res = await fetchWithAuth(`${API_URL}/crops`, {
       method: 'POST',
       headers, // Do NOT set Content-Type header when using FormData
       body: formData
@@ -174,7 +183,7 @@ export const apiService = {
   },
 
   deleteCrop: async (cropId: string) => {
-    const res = await fetch(`${API_URL}/crops/${cropId}`, {
+    const res = await fetchWithAuth(`${API_URL}/crops/${cropId}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -184,7 +193,7 @@ export const apiService = {
 
   updateAgreementStatus: async (agreementId: string, status: 'accepted' | 'rejected') => {
     const action = status === 'accepted' ? 'accept' : 'reject';
-    const res = await fetch(`${API_URL}/orders/${agreementId}/${action}`, {
+    const res = await fetchWithAuth(`${API_URL}/orders/${agreementId}/${action}`, {
       method: 'PATCH',
       headers: getAuthHeaders()
     });
@@ -194,7 +203,7 @@ export const apiService = {
 
   getBuyerDashboardData: async (buyerId: string) => {
     // Fetch my orders and recommendations
-    const ordersRes = await fetch(`${API_URL}/orders/my-orders`, { headers: getAuthHeaders() });
+    const ordersRes = await fetchWithAuth(`${API_URL}/orders/my-orders`, { headers: getAuthHeaders() });
     const ordersData = await handleResponse(ordersRes);
 
     const recommendations = await apiService.getBuyerRecommendations(buyerId);
@@ -206,7 +215,7 @@ export const apiService = {
   },
 
   createAgreement: async (agreementData: { buyerId: string; farmerId: string; cropId: string; quantity: number; price: number; deliveryAddress?: string; terms: string; }) => {
-    const res = await fetch(`${API_URL}/orders`, {
+    const res = await fetchWithAuth(`${API_URL}/orders`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({
@@ -226,14 +235,14 @@ export const apiService = {
     if (role === 'farmer') {
       url = `${API_URL}/orders/farmer-orders`;
     }
-    const res = await fetch(url, { headers: getAuthHeaders() });
+    const res = await fetchWithAuth(url, { headers: getAuthHeaders() });
     const data = await handleResponse(res);
     return data.data.orders.map(mapAgreement);
   },
 
   getBuyerRecommendations: async (buyerId: string): Promise<FarmerRecommendation[]> => {
     try {
-      const res = await fetch(`${API_URL}/crops`, { headers: getAuthHeaders() });
+      const res = await fetchWithAuth(`${API_URL}/crops`, { headers: getAuthHeaders() });
       if (!res.ok) return [];
       const data = await handleResponse(res);
       return data.data.crops.map((c: any) => ({
@@ -266,6 +275,22 @@ export const apiService = {
     }
   },
 
+  getDynamicRisk: async (buyerId: string, farmerId: string): Promise<{ riskProbability: number; riskLevel: string; metrics: any }> => {
+    try {
+      const res = await fetchWithAuth(`${API_URL}/orders/risk-analysis/${buyerId}/${farmerId}`, {
+        headers: getAuthHeaders()
+      });
+      if (!res.ok) {
+         throw new Error('Failed to load dynamic risk');
+      }
+      const data = await res.json();
+      return data.data; // { riskProbability, riskLevel, metrics }
+    } catch (e) {
+      console.error(e);
+      return { riskProbability: 0.5, riskLevel: 'MEDIUM', metrics: null };
+    }
+  },
+
   getPriceForecast: async (cropName: string): Promise<{ history: PriceDataPoint[]; forecast: number; }> => {
     try {
       const res = await fetch(`${ML_URL}/predict-price`, {
@@ -285,7 +310,7 @@ export const apiService = {
   },
 
   sendMessage: async (receiverId: string, content: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/messages`, {
+    const res = await fetchWithAuth(`${API_URL}/messages`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ receiverId, content })
@@ -295,7 +320,7 @@ export const apiService = {
   },
 
   getConversation: async (partnerId: string): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/messages/conversation/${partnerId}`, {
+    const res = await fetchWithAuth(`${API_URL}/messages/conversation/${partnerId}`, {
       headers: getAuthHeaders()
     });
     const data = await handleResponse(res);
@@ -303,7 +328,7 @@ export const apiService = {
   },
 
   downloadAgreementPDF: async (orderId: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/orders/${orderId}/pdf`, {
+    const res = await fetchWithAuth(`${API_URL}/orders/${orderId}/pdf`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) {

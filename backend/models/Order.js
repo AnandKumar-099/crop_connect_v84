@@ -77,6 +77,10 @@ const orderSchema = new mongoose.Schema(
             trim: true,
         },
         // ML Risk Assessment
+        delayDays: {
+            type: Number,
+            default: 0,
+        },
         riskScore: {
             type: Number,
         },

@@ -70,11 +70,11 @@ const FarmerDashboardPage: React.FC = () => {
       await apiService.sellCrop({
         farmerId: user.id,
         cropName,
-        quantity: parseInt(quantity),
-        price: parseFloat(price),
+        quantity: Number(quantity),
+        price: Number(price),
         location,
-        imageFile: cropImageFile,
-      });
+        image: cropImageFile || undefined,
+      } as any);
       setFormMessage({ type: 'success', text: 'Crop listed successfully!' });
       // Reset form
       setCropName('');

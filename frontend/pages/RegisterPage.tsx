@@ -45,6 +45,7 @@ const RegisterPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // Prevent double submissions
     if (role === 'farmer') {
         if (!farmName || !farmAddress || !farmSize) {
             setError('Please fill in all farm details.');
